@@ -6,10 +6,11 @@ class Record:
     def __init__(self, amount, comment, date=None):
         self.amount = amount
         self.comment = comment
+        form_date = '%d.%m.%Y'
         if date is None:
             self.date = dt.date.today()
         else:
-            self.date = dt.datetime.strptime(date, '%d.%m.%Y').date()
+            self.date = dt.datetime.strptime(date, form_date).date()
 
 
 class Calculator:
@@ -18,19 +19,15 @@ class Calculator:
         self.records.append(record)
 
     def get_today_stats(self):
-        today_stats = []
-        for record in self.records:
-            if record.date == self.today:
-                today_stats.append(record.amount)
-        return sum(today_stats)
+        today_stats = sum([record.amount for record in self.records
+                           if record.date == self.today])
+        return today_stats
 
     def get_week_stats(self):
-        week_stats = []
         number_days = self.today - dt.timedelta(days=7)
-        for record in self.records:
-            if number_days <= record.date <= self.today:
-                week_stats.append(record.amount)
-        return sum(week_stats)
+        week_stats = sum([record.amount for record in self.records
+                          if number_days <= record.date <= self.today])
+        return week_stats
 
     def __init__(self, limit):
         self.limit = limit
@@ -40,6 +37,7 @@ class Calculator:
 
 
 class CaloriesCalculator(Calculator):
+
     def get_calories_remained(self):
         calories_remained = (self.limit - self.get_today_stats())
         if calories_remained <= 0:
@@ -50,6 +48,7 @@ class CaloriesCalculator(Calculator):
 
 
 class CashCalculator(Calculator):
+
     RUB_RATE = 1.00
     USD_RATE = 60.00
     EURO_RATE = 70.00
@@ -62,20 +61,25 @@ class CashCalculator(Calculator):
         }
         cash_remained = (self.limit - self.get_today_stats())
         currency_name, rate = CURRENCIES[currency]
-        cash_remained = round((cash_remained) / rate, 2)
         if cash_remained == 0:
             return 'Денег нет, держись'
-        if cash_remained > 0:
-            return f'На сегодня осталось {cash_remained} {currency_name}'
+        if currency not in CURRENCIES:
+            return 'Валюта не поддерживается'
+        cash_remained = cash_remained / rate
         if cash_remained < 0:
-            return (f'Денег нет, держись: твой долг - '
-                    f'{abs(cash_remained)} {currency_name}')
+            cash_remained = abs(cash_remained)
+            return ('Денег нет, держись: твой долг -'
+                    f'{cash_remained: .2f} {currency_name}')
+        return f'На сегодня осталось {cash_remained:.2f} {currency_name}'
 
 
-cash_calculator = CashCalculator(1000)
-cash_calculator.add_record(Record(amount=145, comment='кофе'))
-cash_calculator.add_record(Record(amount=300, comment='Серёге за обед'))
-cash_calculator.add_record(Record(amount=3000,
-                                  comment='бар в Танин др',
-                                  date='08.11.2019'))
-print(cash_calculator.get_today_cash_remained('rub'))
+if __name__ == '__main__':
+    cash_calculator = CashCalculator(1000)
+    cash_calculator.add_record(Record(amount=145, comment='кофе'))
+    cash_calculator.add_record(Record(amount=300, comment='Серёге за обед'))
+    cash_calculator.add_record(Record(amount=3000,
+                                      comment='бар в Танин др',
+                                      date='08.11.2019'))
+    print(cash_calculator.get_today_cash_remained('rub'))
+    """огромная просьба подойти к ревью лояльнее)"""
+    """не смогу физически внести правки до дедлайна"""
