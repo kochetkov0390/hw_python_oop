@@ -15,25 +15,25 @@ class Record:
 
 class Calculator:
 
+    def __init__(self, limit):
+        self.limit = limit
+        self.records = []
+
     def add_record(self, record):
         self.records.append(record)
 
     def get_today_stats(self):
-        today_stats = sum([record.amount for record in self.records
-                           if record.date == self.today])
+        today = dt.date.today()
+        today_stats = sum(record.amount for record in self.records
+                          if record.date == today)
         return today_stats
 
     def get_week_stats(self):
-        number_days = self.today - dt.timedelta(days=7)
+        today = dt.date.today()
+        number_days = today - dt.timedelta(days=7)
         week_stats = sum([record.amount for record in self.records
-                          if number_days <= record.date <= self.today])
+                          if number_days <= record.date <= today])
         return week_stats
-
-    def __init__(self, limit):
-        self.limit = limit
-        self.records = []
-        self.today = dt.date.today()
-        self.week = self.today - dt.timedelta(7)
 
 
 class CaloriesCalculator(Calculator):
@@ -60,12 +60,12 @@ class CashCalculator(Calculator):
             'rub': ('руб', self.RUB_RATE)
         }
         cash_remained = (self.limit - self.get_today_stats())
+        if currency not in CURRENCIES:
+            return 'Валюта не поддерживается.'
         currency_name, rate = CURRENCIES[currency]
+        cash_remained = cash_remained / rate
         if cash_remained == 0:
             return 'Денег нет, держись'
-        if currency not in CURRENCIES:
-            return 'Валюта не поддерживается'
-        cash_remained = cash_remained / rate
         if cash_remained < 0:
             cash_remained = abs(cash_remained)
             return ('Денег нет, держись: твой долг -'
@@ -81,5 +81,3 @@ if __name__ == '__main__':
                                       comment='бар в Танин др',
                                       date='08.11.2019'))
     print(cash_calculator.get_today_cash_remained('rub'))
-    """огромная просьба подойти к ревью лояльнее)"""
-    """не смогу физически внести правки до дедлайна"""
